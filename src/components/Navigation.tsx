@@ -28,7 +28,7 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-lg">F</span>
           </div>
-          <h1 className="text-xl font-bold text-foreground">FinanceApp</h1>
+          <h1 className="text-xl font-bold text-foreground">Wealth Tracker</h1>
         </div>
       </div>
 
