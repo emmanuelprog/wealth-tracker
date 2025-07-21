@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { FinancialDashboard } from "@/components/FinancialDashboard";
+import { AccountsView } from "@/components/AccountsView";
 import { TransactionsView } from "@/components/TransactionsView";
 import { BudgetView } from "@/components/BudgetView";
+import { GoalsView } from "@/components/GoalsView";
+import { InsightsView } from "@/components/InsightsView";
+import { NotificationsView } from "@/components/NotificationsView";
 
 const Index = () => {
   const [activeView, setActiveView] = useState('dashboard');
@@ -11,10 +15,18 @@ const Index = () => {
     switch (activeView) {
       case 'dashboard':
         return <FinancialDashboard />;
+      case 'accounts':
+        return <AccountsView />;
       case 'transactions':
         return <TransactionsView />;
       case 'budget':
         return <BudgetView />;
+      case 'goals':
+        return <GoalsView />;
+      case 'insights':
+        return <InsightsView />;
+      case 'notifications':
+        return <NotificationsView />;
       case 'settings':
         return (
           <div className="p-6 bg-background min-h-screen">

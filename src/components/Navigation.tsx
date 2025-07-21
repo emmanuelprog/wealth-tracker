@@ -4,7 +4,11 @@ import {
   CreditCard, 
   PieChart, 
   Settings,
-  User
+  User,
+  Wallet,
+  Target,
+  TrendingUp,
+  Bell
 } from "lucide-react";
 
 interface NavigationProps {
@@ -15,8 +19,12 @@ interface NavigationProps {
 export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'accounts', label: 'Accounts', icon: Wallet },
     { id: 'transactions', label: 'Transactions', icon: CreditCard },
     { id: 'budget', label: 'Budget', icon: PieChart },
+    { id: 'goals', label: 'Goals', icon: Target },
+    { id: 'insights', label: 'Insights', icon: TrendingUp },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
