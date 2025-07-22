@@ -10,9 +10,11 @@ import {
   EyeOff
 } from "lucide-react";
 import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export const AccountsView = () => {
   const [showBalances, setShowBalances] = useState(true);
+  const [showAddAccount, setShowAddAccount] = useState(false);
 
   const accounts = [
     {
@@ -123,7 +125,7 @@ export const AccountsView = () => {
             {showBalances ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
             {showBalances ? "Hide" : "Show"} Balances
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={() => setShowAddAccount(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Account
           </Button>
@@ -202,6 +204,24 @@ export const AccountsView = () => {
           </Card>
         ))}
       </div>
+
+      {/* Add Account Dialog */}
+      <Dialog open={showAddAccount} onOpenChange={setShowAddAccount}>
+        <DialogContent className="max-w-md">
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Add New Account</h2>
+            <p className="text-muted">Account creation form will be implemented here.</p>
+            <div className="flex gap-2 mt-6">
+              <Button variant="outline" onClick={() => setShowAddAccount(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button onClick={() => setShowAddAccount(false)} className="flex-1">
+                Create Account
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

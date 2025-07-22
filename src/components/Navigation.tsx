@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
   Home, 
   CreditCard, 
@@ -8,8 +9,10 @@ import {
   Wallet,
   Target,
   TrendingUp,
-  Bell
+  Bell,
+  Menu
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NavigationProps {
   activeView: string;
@@ -17,6 +20,8 @@ interface NavigationProps {
 }
 
 export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
+  const isMobile = useIsMobile();
+  
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'accounts', label: 'Accounts', icon: Wallet },
@@ -29,8 +34,8 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
-  return (
-    <nav className="bg-card border-r border-border h-screen w-64 p-4 flex flex-col">
+  const NavigationContent = () => (
+    <div className="bg-card border-r border-border h-screen w-64 p-4 flex flex-col">
       {/* Logo/Brand */}
       <div className="mb-8">
         <div className="flex items-center space-x-3">
@@ -67,11 +72,42 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
 
       {/* User Profile */}
       <div className="border-t border-border pt-4 mt-4">
-        <Button variant="ghost" className="w-full justify-start text-muted hover:text-foreground">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-muted hover:text-foreground"
+          onClick={() => onViewChange('profile')}
+        >
           <User className="w-5 h-5 mr-3" />
           John Doe
         </Button>
       </div>
-    </nav>
+    </div>
   );
+
+  if (isMobile) {
+    return (
+      <>
+        <div className="flex items-center justify-between p-4 bg-card border-b border-border md:hidden">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">WT</span>
+            </div>
+            <h1 className="text-xl font-bold text-foreground">Wealth Tracker</h1>
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-64">
+              <NavigationContent />
+            </SheetContent>
+          </Sheet>
+        </div>
+      </>
+    );
+  }
+
+  return <NavigationContent />;
 };

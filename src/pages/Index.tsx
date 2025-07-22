@@ -16,7 +16,7 @@ const Index = () => {
   const renderView = () => {
     switch (activeView) {
       case 'dashboard':
-        return <FinancialDashboard />;
+        return <FinancialDashboard onViewChange={setActiveView} />;
       case 'accounts':
         return <AccountsView />;
       case 'transactions':
@@ -79,9 +79,9 @@ const Index = () => {
   };
 
   return (
-    <div className="flex bg-background min-h-screen">
+    <div className="flex flex-col md:flex-row bg-background min-h-screen">
       <Navigation activeView={activeView} onViewChange={setActiveView} />
-      <main className="flex-1">
+      <main className="flex-1 overflow-auto">
         {renderView()}
       </main>
     </div>

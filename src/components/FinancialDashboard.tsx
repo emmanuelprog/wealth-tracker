@@ -15,7 +15,11 @@ import { useState } from "react";
 import { AddTransactionForm } from "@/components/forms/AddTransactionForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
-export const FinancialDashboard = () => {
+interface FinancialDashboardProps {
+  onViewChange?: (view: string) => void;
+}
+
+export const FinancialDashboard = ({ onViewChange }: FinancialDashboardProps) => {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   
@@ -110,7 +114,12 @@ export const FinancialDashboard = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-semibold text-foreground">Recent Transactions</CardTitle>
-          <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-primary hover:text-primary/80"
+            onClick={() => onViewChange?.('transactions')}
+          >
             View All
           </Button>
         </CardHeader>

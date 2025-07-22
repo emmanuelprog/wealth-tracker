@@ -12,8 +12,12 @@ import {
   GraduationCap,
   Plane
 } from "lucide-react";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { AddGoalForm } from "@/components/forms/AddGoalForm";
 
 export const GoalsView = () => {
+  const [showAddGoal, setShowAddGoal] = useState(false);
   const savingsGoals = [
     {
       id: 1,
@@ -122,7 +126,7 @@ export const GoalsView = () => {
           <h1 className="text-2xl font-bold text-foreground">Goals & Savings</h1>
           <p className="text-muted mt-1">Track your financial objectives and debt reduction</p>
         </div>
-        <Button>
+        <Button onClick={() => setShowAddGoal(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Add Goal
         </Button>
@@ -274,6 +278,19 @@ export const GoalsView = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Goal Dialog */}
+      <Dialog open={showAddGoal} onOpenChange={setShowAddGoal}>
+        <DialogContent className="p-0 max-w-md">
+          <AddGoalForm
+            onSubmit={(goal) => {
+              console.log("New goal:", goal);
+              setShowAddGoal(false);
+            }}
+            onCancel={() => setShowAddGoal(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

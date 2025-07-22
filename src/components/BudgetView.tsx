@@ -11,8 +11,11 @@ import {
   Settings,
   Plus
 } from "lucide-react";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export const BudgetView = () => {
+  const [showAddCategory, setShowAddCategory] = useState(false);
   // Mock budget data
   const monthlyBudget = 3000;
   const totalSpent = 1850;
@@ -105,7 +108,7 @@ export const BudgetView = () => {
             <Settings className="w-4 h-4 mr-2" />
             Settings
           </Button>
-          <Button size="sm" className="bg-primary hover:bg-primary/90">
+          <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => setShowAddCategory(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Category
           </Button>
@@ -216,6 +219,24 @@ export const BudgetView = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Category Dialog */}
+      <Dialog open={showAddCategory} onOpenChange={setShowAddCategory}>
+        <DialogContent className="max-w-md">
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Add Budget Category</h2>
+            <p className="text-muted">Budget category form will be implemented here.</p>
+            <div className="flex gap-2 mt-6">
+              <Button variant="outline" onClick={() => setShowAddCategory(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button onClick={() => setShowAddCategory(false)} className="flex-1">
+                Add Category
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
