@@ -148,7 +148,7 @@ export const TransactionsView = () => {
                 <div className={`text-lg font-semibold ${
                   transaction.type === 'income' ? 'text-success' : 'text-foreground'
                 }`}>
-                  {transaction.type === 'income' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
+                  {transaction.type === 'income' ? '+' : '-'}₦{Math.abs(transaction.amount).toFixed(2)}
                 </div>
               </div>
             </div>

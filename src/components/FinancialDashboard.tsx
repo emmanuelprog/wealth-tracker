@@ -12,9 +12,12 @@ import {
   ArrowDownRight
 } from "lucide-react";
 import { useState } from "react";
+import { AddTransactionForm } from "@/components/forms/AddTransactionForm";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export const FinancialDashboard = () => {
   const [balanceVisible, setBalanceVisible] = useState(true);
+  const [showAddTransaction, setShowAddTransaction] = useState(false);
   
   // Mock data - in real app this would come from API
   const totalBalance = 15420.50;
@@ -36,7 +39,11 @@ export const FinancialDashboard = () => {
           <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
           <p className="text-muted">Here's your financial overview</p>
         </div>
-        <Button size="sm" className="bg-primary hover:bg-primary/90">
+        <Button 
+          size="sm" 
+          className="bg-primary hover:bg-primary/90"
+          onClick={() => setShowAddTransaction(true)}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Transaction
         </Button>
@@ -57,7 +64,7 @@ export const FinancialDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold">
-            {balanceVisible ? `$${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : "••••••"}
+            {balanceVisible ? `₦${totalBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}` : "••••••"}
           </div>
           <p className="text-primary-foreground/80 text-sm mt-1">
             Available balance
@@ -74,10 +81,10 @@ export const FinancialDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              ${(monthlyBudget - spent).toLocaleString()}
+              ₦{(monthlyBudget - spent).toLocaleString()}
             </div>
             <p className="text-xs text-muted">
-              ${spent.toLocaleString()} spent of ${monthlyBudget.toLocaleString()}
+              ₦{spent.toLocaleString()} spent of ₦{monthlyBudget.toLocaleString()}
             </p>
             <Progress value={budgetProgress} className="mt-3" />
           </CardContent>
@@ -90,7 +97,7 @@ export const FinancialDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              -${spent.toLocaleString()}
+              -₦{spent.toLocaleString()}
             </div>
             <p className="text-xs text-muted">
               +12% from last month
@@ -130,12 +137,25 @@ export const FinancialDashboard = () => {
               <div className={`font-semibold ${
                 transaction.type === 'income' ? 'text-success' : 'text-foreground'
               }`}>
-                {transaction.type === 'income' ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
+                {transaction.type === 'income' ? '+' : ''}₦{Math.abs(transaction.amount).toFixed(2)}
               </div>
             </div>
           ))}
         </CardContent>
       </Card>
+
+      {/* Add Transaction Dialog */}
+      <Dialog open={showAddTransaction} onOpenChange={setShowAddTransaction}>
+        <DialogContent className="p-0 max-w-md">
+          <AddTransactionForm
+            onSubmit={(transaction) => {
+              console.log("New transaction:", transaction);
+              setShowAddTransaction(false);
+            }}
+            onCancel={() => setShowAddTransaction(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -25,6 +25,7 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
     { id: 'goals', label: 'Goals', icon: Target },
     { id: 'insights', label: 'Insights', icon: TrendingUp },
     { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'profile', label: 'Profile', icon: User },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -34,7 +35,7 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
       <div className="mb-8">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">F</span>
+            <span className="text-primary-foreground font-bold text-sm">WT</span>
           </div>
           <h1 className="text-xl font-bold text-foreground">Wealth Tracker</h1>
         </div>

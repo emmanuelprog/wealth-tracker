@@ -125,16 +125,16 @@ export const BudgetView = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-muted">Total Budget</span>
-                <span className="font-semibold text-foreground">${monthlyBudget.toLocaleString()}</span>
+                <span className="font-semibold text-foreground">₦{monthlyBudget.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted">Spent</span>
-                <span className="font-semibold text-foreground">${totalSpent.toLocaleString()}</span>
+                <span className="font-semibold text-foreground">₦{totalSpent.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted">Remaining</span>
                 <span className={`font-semibold ${remaining >= 0 ? 'text-success' : 'text-destructive'}`}>
-                  ${Math.abs(remaining).toLocaleString()}
+                  ₦{Math.abs(remaining).toLocaleString()}
                 </span>
               </div>
               <Progress value={overallProgress} className="mt-4" />
@@ -159,8 +159,8 @@ export const BudgetView = () => {
               </div>
               <p className="text-sm text-muted">
                 {remaining >= 0 
-                  ? `You have $${remaining.toLocaleString()} left to spend` 
-                  : `You are $${Math.abs(remaining).toLocaleString()} over budget`
+                  ? `You have ₦${remaining.toLocaleString()} left to spend` 
+                  : `You are ₦${Math.abs(remaining).toLocaleString()} over budget`
                 }
               </p>
               <Badge 
@@ -193,7 +193,7 @@ export const BudgetView = () => {
                       <div>
                         <h3 className="font-medium text-foreground">{category.name}</h3>
                         <p className="text-sm text-muted">
-                          ${category.spent} of ${category.budgeted}
+                          ₦{category.spent} of ₦{category.budgeted}
                         </p>
                       </div>
                     </div>
@@ -207,7 +207,7 @@ export const BudgetView = () => {
                       {percentage.toFixed(1)}% used
                     </span>
                     <span className="text-muted">
-                      ${Math.abs(remaining)} {remaining >= 0 ? 'left' : 'over'}
+                      ₦{Math.abs(remaining)} {remaining >= 0 ? 'left' : 'over'}
                     </span>
                   </div>
                 </div>
