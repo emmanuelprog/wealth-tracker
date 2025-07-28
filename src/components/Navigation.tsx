@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   Home, 
@@ -36,11 +36,61 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
-  const NavigationContent = () => {
+  const NavigationContent = ({ isMobileSheet = false }: { isMobileSheet?: boolean }) => {
     const { user, signOut } = useAuth();
 
     const handleSignOut = async () => {
       await signOut();
+    };
+
+    const NavButton = ({ item, isActive }: { item: any; isActive: boolean }) => {
+      const Icon = item.icon;
+      const button = (
+        <Button
+          variant={isActive ? "default" : "ghost"}
+          className={`w-full justify-start h-11 ${
+            isActive 
+              ? "bg-primary text-primary-foreground" 
+              : "text-muted hover:text-foreground hover:bg-accent"
+          }`}
+          onClick={() => onViewChange(item.id)}
+        >
+          <Icon className="w-5 h-5 mr-3" />
+          {item.label}
+        </Button>
+      );
+
+      return isMobileSheet ? <SheetClose asChild>{button}</SheetClose> : button;
+    };
+
+    const ProfileButton = () => {
+      const button = (
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-muted hover:text-foreground"
+          onClick={() => onViewChange('profile')}
+        >
+          <User className="w-5 h-5 mr-3" />
+          {user?.user_metadata?.first_name} {user?.user_metadata?.last_name}
+        </Button>
+      );
+
+      return isMobileSheet ? <SheetClose asChild>{button}</SheetClose> : button;
+    };
+
+    const SignOutButton = () => {
+      const button = (
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-muted hover:text-foreground"
+          onClick={handleSignOut}
+        >
+          <LogOut className="w-5 h-5 mr-3" />
+          Sign Out
+        </Button>
+      );
+
+      return isMobileSheet ? <SheetClose asChild>{button}</SheetClose> : button;
     };
 
     return (
@@ -49,7 +99,7 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
         <div className="mb-8">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">WT</span>
+              <TrendingUp className="w-4 h-4 text-primary-foreground" />
             </div>
             <h1 className="text-xl font-bold text-foreground">Wealth Tracker</h1>
           </div>
@@ -58,45 +108,17 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
         {/* Navigation Items */}
         <div className="flex-1 space-y-2">
           {navItems.map((item) => {
-            const Icon = item.icon;
             const isActive = activeView === item.id;
-            
             return (
-              <Button
-                key={item.id}
-                variant={isActive ? "default" : "ghost"}
-                className={`w-full justify-start h-11 ${
-                  isActive 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted hover:text-foreground hover:bg-accent"
-                }`}
-                onClick={() => onViewChange(item.id)}
-              >
-                <Icon className="w-5 h-5 mr-3" />
-                {item.label}
-              </Button>
+              <NavButton key={item.id} item={item} isActive={isActive} />
             );
           })}
         </div>
 
         {/* User Profile */}
         <div className="border-t border-border pt-4 mt-4 space-y-2">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-muted hover:text-foreground"
-            onClick={() => onViewChange('profile')}
-          >
-            <User className="w-5 h-5 mr-3" />
-            {user?.user_metadata?.first_name} {user?.user_metadata?.last_name}
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-muted hover:text-foreground"
-            onClick={handleSignOut}
-          >
-            <LogOut className="w-5 h-5 mr-3" />
-            Sign Out
-          </Button>
+          <ProfileButton />
+          <SignOutButton />
         </div>
       </div>
     );
@@ -108,7 +130,7 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
         <div className="flex items-center justify-between p-4 bg-card border-b border-border md:hidden">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">WT</span>
+              <TrendingUp className="w-4 h-4 text-primary-foreground" />
             </div>
             <h1 className="text-xl font-bold text-foreground">Wealth Tracker</h1>
           </div>
@@ -119,7 +141,7 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-64">
-              <NavigationContent />
+              <NavigationContent isMobileSheet={true} />
             </SheetContent>
           </Sheet>
         </div>
