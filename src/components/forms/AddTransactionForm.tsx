@@ -14,44 +14,42 @@ import { cn } from "@/lib/utils";
 interface AddTransactionFormProps {
   onSubmit: (transaction: any) => void;
   onCancel: () => void;
+  accounts: any[];
+  categories: any[];
 }
 
-export const AddTransactionForm = ({ onSubmit, onCancel }: AddTransactionFormProps) => {
+export const AddTransactionForm = ({ onSubmit, onCancel, accounts, categories }: AddTransactionFormProps) => {
   const [date, setDate] = useState<Date>(new Date());
   const [formData, setFormData] = useState({
     merchant: "",
     amount: "",
-    category: "",
-    type: "expense",
-    description: ""
+    category_id: "",
+    account_id: "",
+    transaction_type: "expense",
+    notes: "",
+    description: "",
   });
-
-  const categories = [
-    "Income",
-    "Groceries", 
-    "Transportation",
-    "Entertainment", 
-    "Food & Dining",
-    "Shopping",
-    "Utilities",
-    "Healthcare",
-    "Education",
-    "Miscellaneous"
-  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     const transaction = {
-      ...formData,
-      amount: parseFloat(formData.amount) * (formData.type === 'expense' ? -1 : 1),
-      date: format(date, 'yyyy-MM-dd'),
-      id: Date.now()
+      merchant: formData.merchant,
+      amount: formData.amount,
+      category_id: formData.category_id,
+      account_id: formData.account_id,
+      transaction_type: formData.transaction_type,
+      transaction_date: date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      notes: formData.notes,
+      description: formData.description,
     };
+    
     onSubmit(transaction);
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -68,50 +66,78 @@ export const AddTransactionForm = ({ onSubmit, onCancel }: AddTransactionFormPro
             <Label htmlFor="merchant">Merchant/Description</Label>
             <Input
               id="merchant"
+              name="merchant"
+              placeholder="e.g., Starbucks"
               value={formData.merchant}
-              onChange={(e) => handleInputChange('merchant', e.target.value)}
-              placeholder="e.g., Grocery Store"
+              onChange={handleInputChange}
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount (₦)</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                value={formData.amount}
-                onChange={(e) => handleInputChange('amount', e.target.value)}
-                placeholder="0.00"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="type">Type</Label>
-              <Select value={formData.type} onValueChange={(value) => handleInputChange('type', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="expense">Expense</SelectItem>
-                  <SelectItem value="income">Income</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="amount">Amount</Label>
+            <Input
+              id="amount"
+              name="amount"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={formData.amount}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="account">Account</Label>
+            <Select 
+              value={formData.account_id} 
+              onValueChange={(value) => setFormData({...formData, account_id: value})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an account" />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.name} ({account.account_type})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+            <Select 
+              value={formData.category_id} 
+              onValueChange={(value) => setFormData({...formData, category_id: value})}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.icon} {category.name}
+                  </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="type">Type</Label>
+            <Select 
+              value={formData.transaction_type} 
+              onValueChange={(value) => setFormData({...formData, transaction_type: value})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select transaction type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="expense">Expense</SelectItem>
+                <SelectItem value="income">Income</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -137,19 +163,30 @@ export const AddTransactionForm = ({ onSubmit, onCancel }: AddTransactionFormPro
                   selected={date}
                   onSelect={(date) => date && setDate(date)}
                   initialFocus
-                  className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Notes (Optional)</Label>
-            <Textarea
+            <Label htmlFor="description">Description (Optional)</Label>
+            <Input
               id="description"
+              name="description"
+              placeholder="Transaction description..."
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Additional details..."
+              onChange={handleInputChange}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Textarea
+              id="notes"
+              name="notes"
+              placeholder="Add any additional notes..."
+              value={formData.notes}
+              onChange={handleInputChange}
               rows={3}
             />
           </div>

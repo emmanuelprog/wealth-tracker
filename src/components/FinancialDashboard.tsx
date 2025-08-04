@@ -1,19 +1,26 @@
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
   Eye, 
-  EyeOff,
-  Plus,
-  ArrowUpRight,
-  ArrowDownRight
+  EyeOff, 
+  Plus, 
+  CreditCard, 
+  TrendingUp, 
+  TrendingDown,
+  DollarSign,
+  ShoppingCart,
+  Coffee,
+  Home
 } from "lucide-react";
-import { useState } from "react";
-import { AddTransactionForm } from "@/components/forms/AddTransactionForm";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AddTransactionForm } from "./forms/AddTransactionForm";
+import { useAccounts } from "@/hooks/useAccounts";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useBudgets } from "@/hooks/useBudgets";
+import { useCategories } from "@/hooks/useCategories";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface FinancialDashboardProps {
   onViewChange?: (view: string) => void;
@@ -22,57 +29,97 @@ interface FinancialDashboardProps {
 export const FinancialDashboard = ({ onViewChange }: FinancialDashboardProps) => {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
-  
-  // Mock data - in real app this would come from API
-  const totalBalance = 15420.50;
-  const monthlyBudget = 3000;
-  const spent = 1850;
-  const budgetProgress = (spent / monthlyBudget) * 100;
-  
-  const recentTransactions = [
-    { id: 1, merchant: "Grocery Store", amount: -85.50, category: "Food", date: "Today", type: "expense" },
-    { id: 2, merchant: "Salary Deposit", amount: 3200.00, category: "Income", date: "Dec 15", type: "income" },
-    { id: 3, merchant: "Gas Station", amount: -45.20, category: "Transportation", date: "Yesterday", type: "expense" },
-  ];
+
+  // Get real data from hooks
+  const { accounts, loading: accountsLoading, getTotalBalance } = useAccounts();
+  const { transactions, loading: transactionsLoading, getRecentTransactions, getTotalSpending, createTransaction } = useTransactions();
+  const { budgets, loading: budgetsLoading, getTotalBudgetAmount } = useBudgets();
+  const { categories } = useCategories();
+
+  const totalBalance = getTotalBalance();
+  const monthlyBudget = getTotalBudgetAmount();
+  const monthlySpending = getTotalSpending(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
+  );
+  const recentTransactions = getRecentTransactions(4);
+
+  const isLoading = accountsLoading || transactionsLoading || budgetsLoading;
+
+  const getTransactionIcon = (categoryName?: string) => {
+    switch (categoryName?.toLowerCase()) {
+      case "food & dining":
+        return Coffee;
+      case "shopping":
+        return ShoppingCart;
+      case "income":
+        return DollarSign;
+      case "bills & utilities":
+        return Home;
+      default:
+        return CreditCard;
+    }
+  };
+
+  const handleAddTransaction = async (transactionData: any) => {
+    try {
+      await createTransaction({
+        account_id: transactionData.account_id,
+        category_id: transactionData.category_id,
+        merchant: transactionData.merchant,
+        description: transactionData.description,
+        amount: parseFloat(transactionData.amount),
+        transaction_type: transactionData.transaction_type as "expense" | "income" | "transfer",
+        transaction_date: transactionData.transaction_date,
+        notes: transactionData.notes,
+      });
+      setShowAddTransaction(false);
+    } catch (error) {
+      console.error("Failed to add transaction:", error);
+    }
+  };
 
   return (
-    <div className="p-6 space-y-6 bg-background min-h-screen">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
-          <p className="text-muted">Here's your financial overview</p>
+          <h1 className="text-3xl font-bold">Welcome back!</h1>
+          <p className="text-muted-foreground">Here's your financial overview</p>
         </div>
-        <Button 
-          size="sm" 
-          className="bg-primary hover:bg-primary/90"
-          onClick={() => setShowAddTransaction(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
+        <Button onClick={() => setShowAddTransaction(true)}>
+          <Plus className="h-4 w-4 mr-2" />
           Add Transaction
         </Button>
       </div>
 
-      {/* Balance Card */}
-      <Card className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-medium">Total Balance</CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setBalanceVisible(!balanceVisible)}
-            className="text-primary-foreground hover:bg-primary-foreground/20"
-          >
-            {balanceVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-          </Button>
+      {/* Balance Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Total Balance</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">
-            {balanceVisible ? `₦${totalBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}` : "••••••"}
-          </div>
-          <p className="text-primary-foreground/80 text-sm mt-1">
-            Available balance
-          </p>
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-32" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">
+                  {balanceVisible ? `$${totalBalance.toLocaleString()}` : "••••••"}
+                </p>
+                <p className="text-sm text-muted-foreground">Total Balance</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setBalanceVisible(!balanceVisible)}
+              >
+                {balanceVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -80,88 +127,117 @@ export const FinancialDashboard = ({ onViewChange }: FinancialDashboardProps) =>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted">Monthly Budget</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted" />
+            <CardTitle className="text-sm font-medium">Monthly Budget</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              ₦{(monthlyBudget - spent).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted">
-              ₦{spent.toLocaleString()} spent of ₦{monthlyBudget.toLocaleString()}
-            </p>
-            <Progress value={budgetProgress} className="mt-3" />
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-2 w-full" />
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">${monthlyBudget.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  ${monthlySpending.toLocaleString()} spent
+                </p>
+                <div className="mt-2 bg-secondary rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full" 
+                    style={{ width: `${Math.min((monthlySpending / monthlyBudget) * 100, 100)}%` }}
+                  />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted">This Month</CardTitle>
-            <TrendingDown className="h-4 w-4 text-destructive" />
+            <CardTitle className="text-sm font-medium">This Month</CardTitle>
+            <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              -₦{spent.toLocaleString()}
-            </div>
-            <p className="text-xs text-muted">
-              +12% from last month
-            </p>
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">${monthlySpending.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  {monthlySpending > monthlyBudget ? "Over budget" : "Under budget"}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Recent Transactions */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-foreground">Recent Transactions</CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-primary hover:text-primary/80"
-            onClick={() => onViewChange?.('transactions')}
-          >
-            View All
-          </Button>
+        <CardHeader>
+          <CardTitle>Recent Transactions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {recentTransactions.map((transaction) => (
-            <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg bg-background border border-border">
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-full ${
-                  transaction.type === 'income' 
-                    ? 'bg-success/10 text-success' 
-                    : 'bg-destructive/10 text-destructive'
-                }`}>
-                  {transaction.type === 'income' ? (
-                    <ArrowUpRight className="w-4 h-4" />
-                  ) : (
-                    <ArrowDownRight className="w-4 h-4" />
-                  )}
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-foreground">{transaction.merchant}</p>
-                  <p className="text-sm text-muted">{transaction.category} • {transaction.date}</p>
+                <div className="text-right space-y-1">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-3 w-12" />
                 </div>
               </div>
-              <div className={`font-semibold ${
-                transaction.type === 'income' ? 'text-success' : 'text-foreground'
-              }`}>
-                {transaction.type === 'income' ? '+' : ''}₦{Math.abs(transaction.amount).toFixed(2)}
-              </div>
-            </div>
-          ))}
+            ))
+          ) : recentTransactions.length > 0 ? (
+            recentTransactions.map((transaction) => {
+              const IconComponent = getTransactionIcon(transaction.category?.name);
+              return (
+                <div key={transaction.id} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-full bg-secondary">
+                      <IconComponent className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{transaction.merchant || 'Unknown'}</p>
+                      <p className="text-sm text-muted-foreground">{transaction.category?.name || 'Uncategorized'}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-medium ${transaction.transaction_type === 'expense' ? 'text-red-500' : 'text-green-500'}`}>
+                      {transaction.transaction_type === 'expense' ? '-' : '+'}${Math.abs(Number(transaction.amount)).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{new Date(transaction.transaction_date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-center text-muted-foreground py-4">No transactions yet</p>
+          )}
         </CardContent>
       </Card>
 
       {/* Add Transaction Dialog */}
       <Dialog open={showAddTransaction} onOpenChange={setShowAddTransaction}>
-        <DialogContent className="p-0 max-w-md">
-          <AddTransactionForm
-            onSubmit={(transaction) => {
-              console.log("New transaction:", transaction);
-              setShowAddTransaction(false);
-            }}
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Transaction</DialogTitle>
+          </DialogHeader>
+          <AddTransactionForm 
+            onSubmit={handleAddTransaction}
             onCancel={() => setShowAddTransaction(false)}
+            accounts={accounts}
+            categories={categories}
           />
         </DialogContent>
       </Dialog>
