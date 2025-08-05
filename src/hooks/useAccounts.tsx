@@ -52,7 +52,11 @@ export const useAccounts = () => {
     try {
       const { data, error } = await supabase
         .from("accounts")
-        .insert([{ ...accountData, user_id: user.id }])
+        .insert([{ 
+          ...accountData, 
+          user_id: user.id,
+          currency: accountData.currency || 'NGN' // Default to NGN if not specified
+        }])
         .select()
         .single();
 

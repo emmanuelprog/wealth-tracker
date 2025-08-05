@@ -224,6 +224,7 @@ export type Database = {
           last_name: string | null
           location: string | null
           phone: string | null
+          preferred_currency: string | null
           updated_at: string
           user_id: string
         }
@@ -236,6 +237,7 @@ export type Database = {
           last_name?: string | null
           location?: string | null
           phone?: string | null
+          preferred_currency?: string | null
           updated_at?: string
           user_id: string
         }
@@ -248,6 +250,7 @@ export type Database = {
           last_name?: string | null
           location?: string | null
           phone?: string | null
+          preferred_currency?: string | null
           updated_at?: string
           user_id?: string
         }

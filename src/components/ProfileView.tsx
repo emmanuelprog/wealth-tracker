@@ -13,8 +13,10 @@ import {
   Edit,
   Shield,
   CreditCard,
-  Bell
+  Bell,
+  Globe
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 
 export const ProfileView = () => {
@@ -25,8 +27,15 @@ export const ProfileView = () => {
     phone: "+234 801 234 5678",
     location: "Lagos, Nigeria",
     memberSince: "January 2024",
-    accountType: "Premium"
+    accountType: "Premium",
+    currency: "NGN"
   });
+
+  const currencies = [
+    { value: "NGN", label: "Nigerian Naira (₦)", symbol: "₦" },
+    { value: "USD", label: "US Dollar ($)", symbol: "$" },
+    { value: "GBP", label: "British Pound (£)", symbol: "£" }
+  ];
 
   const stats = [
     { label: "Total Transactions", value: "147", icon: CreditCard },
@@ -121,6 +130,25 @@ export const ProfileView = () => {
                     className={!isEditing ? "bg-muted" : ""}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Preferred Currency</Label>
+                  <Select
+                    value={profile.currency}
+                    onValueChange={(value) => setProfile({...profile, currency: value})}
+                    disabled={!isEditing}
+                  >
+                    <SelectTrigger className={!isEditing ? "bg-muted" : ""}>
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map((currency) => (
+                        <SelectItem key={currency.value} value={currency.value}>
+                          {currency.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -193,6 +221,10 @@ export const ProfileView = () => {
               <Button variant="outline" className="w-full justify-start">
                 <Bell className="w-4 h-4 mr-2" />
                 Notification Preferences
+              </Button>
+              <Button variant="outline" className="w-full justify-start">
+                <Globe className="w-4 h-4 mr-2" />
+                Currency Settings
               </Button>
               <Button variant="outline" className="w-full justify-start">
                 <CreditCard className="w-4 h-4 mr-2" />
