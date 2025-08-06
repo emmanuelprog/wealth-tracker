@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   PieChart, 
   TrendingUp, 
@@ -9,77 +11,36 @@ import {
   AlertTriangle,
   Target,
   Settings,
-  Plus
+  Plus,
+  AlertCircle,
+  Wallet
 } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useBudgets } from "@/hooks/useBudgets";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useAuth } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib/currency";
 
 export const BudgetView = () => {
   const [showAddCategory, setShowAddCategory] = useState(false);
-  // Mock budget data
-  const monthlyBudget = 3000;
-  const totalSpent = 1850;
-  const remaining = monthlyBudget - totalSpent;
-  const overallProgress = (totalSpent / monthlyBudget) * 100;
   
-  const budgetCategories = [
-    { 
-      name: "Groceries", 
-      budgeted: 600, 
-      spent: 420, 
-      color: "bg-blue-500",
-      icon: "🛒"
-    },
-    { 
-      name: "Transportation", 
-      budgeted: 300, 
-      spent: 245, 
-      color: "bg-purple-500",
-      icon: "🚗"
-    },
-    { 
-      name: "Entertainment", 
-      budgeted: 200, 
-      spent: 185, 
-      color: "bg-pink-500",
-      icon: "🎬"
-    },
-    { 
-      name: "Food & Dining", 
-      budgeted: 400, 
-      spent: 320, 
-      color: "bg-orange-500",
-      icon: "🍽️"
-    },
-    { 
-      name: "Shopping", 
-      budgeted: 300, 
-      spent: 150, 
-      color: "bg-indigo-500",
-      icon: "🛍️"
-    },
-    { 
-      name: "Utilities", 
-      budgeted: 250, 
-      spent: 230, 
-      color: "bg-gray-500",
-      icon: "⚡"
-    },
-    { 
-      name: "Healthcare", 
-      budgeted: 200, 
-      spent: 80, 
-      color: "bg-green-500",
-      icon: "🏥"
-    },
-    { 
-      name: "Miscellaneous", 
-      budgeted: 250, 
-      spent: 220, 
-      color: "bg-yellow-500",
-      icon: "📦"
-    },
-  ];
+  const { user } = useAuth();
+  const { budgets, loading, error, getCurrentMonthBudgets, getTotalBudgetAmount } = useBudgets();
+  const { getTotalSpending } = useTransactions();
+  const userCurrency = user?.user_metadata?.preferred_currency || 'NGN';
+  
+  const currentMonthBudgets = getCurrentMonthBudgets();
+  const totalBudget = getTotalBudgetAmount();
+  
+  // Calculate total spending for current month
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  const totalSpent = getTotalSpending(startOfMonth, endOfMonth);
+  
+  const remaining = totalBudget - totalSpent;
+  const overallProgress = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
   const getStatusColor = (spent: number, budgeted: number) => {
     const percentage = (spent / budgeted) * 100;
@@ -94,6 +55,40 @@ export const BudgetView = () => {
     if (percentage >= 75) return <TrendingUp className="w-4 h-4 text-warning" />;
     return <TrendingDown className="w-4 h-4 text-success" />;
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6 bg-background min-h-screen">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Budget Overview</h1>
+            <p className="text-muted">Track your spending goals and progress</p>
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="md:col-span-2">
+            <CardContent className="p-6">
+              <Skeleton className="h-32 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <Skeleton className="h-32 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 bg-background min-h-screen">
@@ -115,6 +110,13 @@ export const BudgetView = () => {
         </div>
       </div>
 
+      {error && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Budget Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2">
@@ -128,16 +130,16 @@ export const BudgetView = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-muted">Total Budget</span>
-                <span className="font-semibold text-foreground">₦{monthlyBudget.toLocaleString()}</span>
+                <span className="font-semibold text-foreground">{formatCurrency(totalBudget, userCurrency)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted">Spent</span>
-                <span className="font-semibold text-foreground">₦{totalSpent.toLocaleString()}</span>
+                <span className="font-semibold text-foreground">{formatCurrency(totalSpent, userCurrency)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted">Remaining</span>
                 <span className={`font-semibold ${remaining >= 0 ? 'text-success' : 'text-destructive'}`}>
-                  ₦{Math.abs(remaining).toLocaleString()}
+                  {formatCurrency(Math.abs(remaining), userCurrency)}
                 </span>
               </div>
               <Progress value={overallProgress} className="mt-4" />
@@ -162,8 +164,8 @@ export const BudgetView = () => {
               </div>
               <p className="text-sm text-muted">
                 {remaining >= 0 
-                  ? `You have ₦${remaining.toLocaleString()} left to spend` 
-                  : `You are ₦${Math.abs(remaining).toLocaleString()} over budget`
+                  ? `You have ${formatCurrency(remaining, userCurrency)} left to spend` 
+                  : `You are ${formatCurrency(Math.abs(remaining), userCurrency)} over budget`
                 }
               </p>
               <Badge 
@@ -183,40 +185,54 @@ export const BudgetView = () => {
           <CardTitle className="text-lg font-semibold text-foreground">Category Breakdown</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {budgetCategories.map((category) => {
-              const percentage = (category.spent / category.budgeted) * 100;
-              const remaining = category.budgeted - category.spent;
-              
-              return (
-                <div key={category.name} className="p-4 border border-border rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-2xl">{category.icon}</span>
-                      <div>
-                        <h3 className="font-medium text-foreground">{category.name}</h3>
-                        <p className="text-sm text-muted">
-                          ₦{category.spent} of ₦{category.budgeted}
-                        </p>
+          {currentMonthBudgets.length === 0 ? (
+            <div className="text-center py-8">
+              <Wallet className="w-12 h-12 text-muted mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">No budgets set</h3>
+              <p className="text-muted mb-4">Create budget categories to track your spending</p>
+              <Button onClick={() => setShowAddCategory(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Your First Budget
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {currentMonthBudgets.map((budget) => {
+                // Calculate spending for this category in the current month
+                const categorySpent = 0; // This would need to be calculated from transactions
+                const percentage = Number(budget.amount) > 0 ? (categorySpent / Number(budget.amount)) * 100 : 0;
+                const remaining = Number(budget.amount) - categorySpent;
+                
+                return (
+                  <div key={budget.id} className="p-4 border border-border rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{budget.category?.icon || '💰'}</span>
+                        <div>
+                          <h3 className="font-medium text-foreground">{budget.category?.name}</h3>
+                          <p className="text-sm text-muted">
+                            {formatCurrency(categorySpent, userCurrency)} of {formatCurrency(Number(budget.amount), userCurrency)}
+                          </p>
+                        </div>
                       </div>
+                      {getStatusIcon(categorySpent, Number(budget.amount))}
                     </div>
-                    {getStatusIcon(category.spent, category.budgeted)}
+                    
+                    <Progress value={percentage} className="h-2" />
+                    
+                    <div className="flex justify-between text-sm">
+                      <span className={getStatusColor(categorySpent, Number(budget.amount))}>
+                        {percentage.toFixed(1)}% used
+                      </span>
+                      <span className="text-muted">
+                        {formatCurrency(Math.abs(remaining), userCurrency)} {remaining >= 0 ? 'left' : 'over'}
+                      </span>
+                    </div>
                   </div>
-                  
-                  <Progress value={percentage} className="h-2" />
-                  
-                  <div className="flex justify-between text-sm">
-                    <span className={getStatusColor(category.spent, category.budgeted)}>
-                      {percentage.toFixed(1)}% used
-                    </span>
-                    <span className="text-muted">
-                      ₦{Math.abs(remaining)} {remaining >= 0 ? 'left' : 'over'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 

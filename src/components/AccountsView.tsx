@@ -1,61 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   CreditCard, 
   Banknote, 
   TrendingUp, 
   Plus,
   Eye,
-  EyeOff
+  EyeOff,
+  AlertCircle
 } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useAccounts } from "@/hooks/useAccounts";
+import { useAuth } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib/currency";
+import { AddAccountForm } from "@/components/forms/AddAccountForm";
 
 export const AccountsView = () => {
   const [showBalances, setShowBalances] = useState(true);
   const [showAddAccount, setShowAddAccount] = useState(false);
-
-  const accounts = [
-    {
-      id: 1,
-      name: "Main Checking",
-      type: "checking",
-      bank: "First Bank",
-      balance: 15750.00,
-      lastTransaction: "2024-01-20",
-      status: "active"
-    },
-    {
-      id: 2,
-      name: "Savings Account",
-      type: "savings",
-      bank: "GTBank",
-      balance: 45200.00,
-      lastTransaction: "2024-01-19",
-      status: "active"
-    },
-    {
-      id: 3,
-      name: "Credit Card",
-      type: "credit",
-      bank: "Access Bank",
-      balance: -2850.00,
-      limit: 50000.00,
-      lastTransaction: "2024-01-21",
-      status: "active"
-    },
-    {
-      id: 4,
-      name: "Investment Portfolio",
-      type: "investment",
-      bank: "Stanbic IBTC",
-      balance: 125000.00,
-      performance: "+12.5%",
-      lastTransaction: "2024-01-18",
-      status: "active"
-    }
-  ];
+  const { user } = useAuth();
+  const { accounts, loading, error, getTotalBalance } = useAccounts();
 
   const getAccountIcon = (type: string) => {
     switch (type) {
@@ -86,27 +54,48 @@ export const AccountsView = () => {
     }
   };
 
-  const formatBalance = (balance: number, type: string) => {
+  const formatBalance = (balance: number, type: string, currency: string) => {
     if (!showBalances) return "••••••";
     
-    const formatted = Math.abs(balance).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-    
     if (type === 'credit' && balance < 0) {
-      return `₦${formatted} owed`;
+      return `${formatCurrency(Math.abs(balance), currency)} owed`;
     }
     
-    return `₦${formatted}`;
+    return formatCurrency(balance, currency);
   };
 
-  const totalNetWorth = accounts.reduce((total, account) => {
-    if (account.type === 'credit') {
-      return total + account.balance; // credit balance is negative
-    }
-    return total + account.balance;
-  }, 0);
+  const totalNetWorth = getTotalBalance();
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-background min-h-screen">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Accounts</h1>
+            <p className="text-muted mt-1">Manage all your financial accounts</p>
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-9 w-32" />
+          </div>
+        </div>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <Skeleton className="h-16 w-full" />
+          </CardContent>
+        </Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-32 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-background min-h-screen">
@@ -132,6 +121,13 @@ export const AccountsView = () => {
         </div>
       </div>
 
+      {error && (
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Net Worth Summary */}
       <Card className="mb-6">
         <CardContent className="p-6">
@@ -139,7 +135,7 @@ export const AccountsView = () => {
             <div>
               <p className="text-sm text-muted">Total Net Worth</p>
               <p className="text-3xl font-bold text-foreground">
-                {showBalances ? `₦${totalNetWorth.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : "••••••••"}
+                {showBalances ? formatCurrency(totalNetWorth, user?.user_metadata?.preferred_currency || 'NGN') : "••••••••"}
               </p>
             </div>
             <div className="text-right">
@@ -151,75 +147,69 @@ export const AccountsView = () => {
       </Card>
 
       {/* Accounts Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {accounts.map((account) => (
-          <Card key={account.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-muted rounded-lg">
-                    {getAccountIcon(account.type)}
+      {accounts.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Banknote className="w-12 h-12 text-muted mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No accounts yet</h3>
+            <p className="text-muted mb-4">Add your first account to start tracking your finances</p>
+            <Button onClick={() => setShowAddAccount(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Your First Account
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {accounts.map((account) => (
+            <Card key={account.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-muted rounded-lg">
+                      {getAccountIcon(account.account_type)}
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{account.name}</CardTitle>
+                      <p className="text-sm text-muted">{account.institution_name || 'Bank Account'}</p>
+                    </div>
                   </div>
+                  <Badge variant="secondary" className={getAccountTypeColor(account.account_type)}>
+                    {account.account_type}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
                   <div>
-                    <CardTitle className="text-lg">{account.name}</CardTitle>
-                    <p className="text-sm text-muted">{account.bank}</p>
+                    <p className="text-sm text-muted">
+                      Available Balance
+                    </p>
+                    <p className="text-xl font-bold text-foreground">
+                      {formatBalance(Number(account.balance), account.account_type, account.currency)}
+                    </p>
+                    {account.account_number_last_four && (
+                      <p className="text-xs text-muted">
+                        ••••{account.account_number_last_four}
+                      </p>
+                    )}
+                  </div>
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-xs text-muted">
+                      Last updated: {new Date(account.updated_at).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
-                <Badge variant="secondary" className={getAccountTypeColor(account.type)}>
-                  {account.type}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-muted">
-                    {account.type === 'credit' ? 'Current Balance' : 'Available Balance'}
-                  </p>
-                  <p className={`text-xl font-bold ${
-                    account.type === 'credit' && account.balance < 0 
-                      ? 'text-red-600' 
-                      : 'text-foreground'
-                  }`}>
-                    {formatBalance(account.balance, account.type)}
-                  </p>
-                  {account.type === 'credit' && account.limit && (
-                    <p className="text-xs text-muted">
-                      Limit: {showBalances ? `₦${account.limit.toLocaleString()}` : "••••••"}
-                    </p>
-                  )}
-                  {account.type === 'investment' && account.performance && (
-                    <p className="text-xs text-green-600">
-                      Performance: {account.performance}
-                    </p>
-                  )}
-                </div>
-                <div className="pt-2 border-t border-border">
-                  <p className="text-xs text-muted">
-                    Last transaction: {new Date(account.lastTransaction).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Add Account Dialog */}
       <Dialog open={showAddAccount} onOpenChange={setShowAddAccount}>
-        <DialogContent className="max-w-md">
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Add New Account</h2>
-            <p className="text-muted">Account creation form will be implemented here.</p>
-            <div className="flex gap-2 mt-6">
-              <Button variant="outline" onClick={() => setShowAddAccount(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button onClick={() => setShowAddAccount(false)} className="flex-1">
-                Create Account
-              </Button>
-            </div>
-          </div>
+        <DialogContent className="max-w-md p-0">
+          <AddAccountForm onClose={() => setShowAddAccount(false)} />
         </DialogContent>
       </Dialog>
     </div>
