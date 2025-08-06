@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,6 +25,13 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [preferredCurrency, setPreferredCurrency] = useState("NGN");
+
+  const currencies = [
+    { value: "NGN", label: "Nigerian Naira (₦)", symbol: "₦" },
+    { value: "USD", label: "US Dollar ($)", symbol: "$" },
+    { value: "GBP", label: "British Pound (£)", symbol: "£" }
+  ];
 
   useEffect(() => {
     // Check if user is already logged in
@@ -96,6 +104,7 @@ const Auth = () => {
           data: {
             first_name: firstName,
             last_name: lastName,
+            preferred_currency: preferredCurrency,
           }
         }
       });
@@ -221,6 +230,21 @@ const Auth = () => {
                         required
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">Preferred Currency</Label>
+                    <Select value={preferredCurrency} onValueChange={setPreferredCurrency}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map((currency) => (
+                          <SelectItem key={currency.value} value={currency.value}>
+                            {currency.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>

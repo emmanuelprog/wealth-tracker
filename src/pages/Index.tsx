@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccounts } from "@/hooks/useAccounts";
 import { Navigation } from "@/components/Navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FinancialDashboard } from "@/components/FinancialDashboard";
@@ -11,10 +12,13 @@ import { GoalsView } from "@/components/GoalsView";
 import { InsightsView } from "@/components/InsightsView";
 import { NotificationsView } from "@/components/NotificationsView";
 import { ProfileView } from "@/components/ProfileView";
+import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 
 const Index = () => {
   const [activeView, setActiveView] = useState('dashboard');
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loading } = useAuth();
+  const { accounts, loading: accountsLoading } = useAccounts();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +27,14 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  useEffect(() => {
+    // Check if user needs onboarding (no accounts created yet)
+    if (user && !accountsLoading && accounts.length === 0) {
+      setShowOnboarding(true);
+    }
+  }, [user, accounts, accountsLoading]);
+
+  if (loading || accountsLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -36,6 +47,15 @@ const Index = () => {
 
   if (!user) {
     return null; // Will redirect to welcome page
+  }
+
+  // Show onboarding flow if user hasn't created any accounts yet
+  if (showOnboarding) {
+    return (
+      <OnboardingFlow 
+        onComplete={() => setShowOnboarding(false)} 
+      />
+    );
   }
 
   const renderView = () => {
