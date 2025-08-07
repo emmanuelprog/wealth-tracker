@@ -11,64 +11,130 @@ import {
   CreditCard,
   BarChart3
 } from "lucide-react";
+import { useAccounts } from "@/hooks/useAccounts";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useBudgets } from "@/hooks/useBudgets";
+import { useGoals } from "@/hooks/useGoals";
+import { useProfile } from "@/hooks/useProfile";
+import { formatCurrency } from "@/lib/currency";
 
 export const InsightsView = () => {
-  const insights = [
-    {
-      id: 1,
-      type: "saving",
-      title: "Great Progress on Emergency Fund!",
-      description: "You're 37% towards your emergency fund goal. At your current rate, you'll reach it by November 2024.",
-      impact: "positive",
-      action: "Consider increasing monthly savings by ₦5,000 to reach your goal 2 months earlier.",
-      icon: PiggyBank,
-      priority: "medium"
-    },
-    {
-      id: 2,
-      type: "spending",
-      title: "Dining Out Spending Alert",
-      description: "Your dining expenses increased by 45% this month compared to last month.",
-      impact: "negative",
-      action: "Consider meal prepping or setting a weekly dining budget of ₦15,000.",
-      icon: AlertTriangle,
-      priority: "high"
-    },
-    {
-      id: 3,
-      type: "investment",
-      title: "Investment Opportunity",
-      description: "Your emergency fund is nearly complete. Consider starting to invest in index funds.",
-      impact: "positive",
-      action: "Research low-cost index funds and consider investing ₦20,000 monthly.",
-      icon: TrendingUp,
-      priority: "low"
-    },
-    {
-      id: 4,
-      type: "debt",
-      title: "Credit Card Payoff Strategy",
-      description: "Paying an extra ₦5,000 monthly could save you ₦18,000 in interest.",
-      impact: "positive",
-      action: "Increase your credit card payment from ₦25,000 to ₦30,000 monthly.",
-      icon: CreditCard,
-      priority: "high"
-    }
-  ];
+  const { getTotalBalance } = useAccounts();
+  const { getTotalSpending, getTotalIncome, transactions } = useTransactions();
+  const { getCurrentMonthBudgets, getTotalBudgetAmount } = useBudgets();
+  const { goals, getTotalSavingsTarget, getTotalSavingsProgress } = useGoals();
+  const { profile } = useProfile();
 
-  const spendingTrends = [
-    { category: "Groceries", thisMonth: 45000, lastMonth: 42000, change: 7.1 },
-    { category: "Transportation", thisMonth: 28000, lastMonth: 35000, change: -20.0 },
-    { category: "Dining Out", thisMonth: 32000, lastMonth: 22000, change: 45.5 },
-    { category: "Entertainment", thisMonth: 18000, lastMonth: 15000, change: 20.0 },
-    { category: "Utilities", thisMonth: 25000, lastMonth: 24000, change: 4.2 }
-  ];
+  const currency = profile?.preferred_currency || "NGN";
+
+  // Calculate real financial metrics
+  const totalIncome = getTotalIncome();
+  const totalExpenses = getTotalSpending();
+  const netIncome = totalIncome - totalExpenses;
+  const savingsRate = totalIncome > 0 ? ((netIncome / totalIncome) * 100) : 0;
+  
+  const currentMonthBudgets = getCurrentMonthBudgets();
+  const totalBudget = getTotalBudgetAmount();
+  const budgetAdherence = totalBudget > 0 ? Math.max(0, ((totalBudget - totalExpenses) / totalBudget) * 100) : 100;
+
+  // Generate real insights based on user data
+  const generateInsights = () => {
+    const insights = [];
+
+    // Savings goal insight
+    const savingsGoals = goals.filter(goal => goal.goal_type === 'savings');
+    if (savingsGoals.length > 0) {
+      const progress = getTotalSavingsProgress();
+      const target = getTotalSavingsTarget();
+      const progressPercentage = target > 0 ? (progress / target) * 100 : 0;
+      
+      insights.push({
+        id: 1,
+        type: "saving",
+        title: progressPercentage > 50 ? "Great Progress on Savings!" : "Boost Your Savings",
+        description: `You're ${progressPercentage.toFixed(1)}% towards your savings goals (${formatCurrency(progress, currency)} of ${formatCurrency(target, currency)}).`,
+        impact: progressPercentage > 50 ? "positive" : "negative",
+        action: progressPercentage > 50 
+          ? "Keep up the excellent work! Consider increasing your savings rate."
+          : "Consider setting up automatic transfers to boost your savings.",
+        icon: PiggyBank,
+        priority: progressPercentage < 25 ? "high" : "medium"
+      });
+    }
+
+    // Budget adherence insight
+    if (budgetAdherence < 90) {
+      insights.push({
+        id: 2,
+        type: "spending",
+        title: "Budget Alert",
+        description: `You've used ${(100 - budgetAdherence).toFixed(1)}% more than your monthly budget.`,
+        impact: "negative",
+        action: "Review your spending categories and consider adjusting your budget or reducing expenses.",
+        icon: AlertTriangle,
+        priority: budgetAdherence < 70 ? "high" : "medium"
+      });
+    } else {
+      insights.push({
+        id: 2,
+        type: "spending",
+        title: "Budget on Track!",
+        description: `You're staying within ${budgetAdherence.toFixed(1)}% of your monthly budget.`,
+        impact: "positive",
+        action: "Great job managing your expenses! Keep monitoring your spending.",
+        icon: Target,
+        priority: "low"
+      });
+    }
+
+    // Income vs expenses insight
+    if (netIncome < 0) {
+      insights.push({
+        id: 3,
+        type: "debt",
+        title: "Spending Exceeds Income",
+        description: `Your expenses are ${formatCurrency(Math.abs(netIncome), currency)} more than your income this month.`,
+        impact: "negative",
+        action: "Review your expenses and identify areas to cut back. Consider additional income sources.",
+        icon: CreditCard,
+        priority: "high"
+      });
+    } else if (savingsRate > 20) {
+      insights.push({
+        id: 3,
+        type: "investment",
+        title: "Investment Opportunity",
+        description: `With a ${savingsRate.toFixed(1)}% savings rate, you're doing great! Consider investing surplus funds.`,
+        impact: "positive",
+        action: "Research investment options like index funds or government bonds.",
+        icon: TrendingUp,
+        priority: "low"
+      });
+    }
+
+    return insights;
+  };
+
+  // Calculate spending trends by category (mock data for now)
+  const generateSpendingTrends = () => {
+    // This would ideally compare current month vs previous month
+    // For now, we'll use sample data based on transaction patterns
+    return [
+      { category: "Food & Dining", thisMonth: totalExpenses * 0.3, lastMonth: totalExpenses * 0.25, change: 20.0 },
+      { category: "Transportation", thisMonth: totalExpenses * 0.2, lastMonth: totalExpenses * 0.25, change: -20.0 },
+      { category: "Shopping", thisMonth: totalExpenses * 0.25, lastMonth: totalExpenses * 0.2, change: 25.0 },
+      { category: "Bills & Utilities", thisMonth: totalExpenses * 0.25, lastMonth: totalExpenses * 0.3, change: -16.7 },
+    ];
+  };
+
+  const insights = generateInsights();
+  const spendingTrends = generateSpendingTrends();
 
   const monthlyOverview = {
-    totalIncome: 180000,
-    totalExpenses: 142000,
-    savingsRate: 21.1,
-    budgetAdherence: 89.3
+    totalIncome,
+    totalExpenses,
+    savingsRate,
+    budgetAdherence
   };
 
   const getImpactColor = (impact: string) => {
@@ -111,7 +177,7 @@ export const InsightsView = () => {
               <BarChart3 className="w-5 h-5 text-blue-600" />
               <div>
                 <p className="text-sm text-muted">Savings Rate</p>
-                <p className="text-xl font-bold text-foreground">{monthlyOverview.savingsRate}%</p>
+                <p className="text-xl font-bold text-foreground">{savingsRate.toFixed(1)}%</p>
               </div>
             </div>
           </CardContent>
@@ -123,7 +189,7 @@ export const InsightsView = () => {
               <Target className="w-5 h-5 text-green-600" />
               <div>
                 <p className="text-sm text-muted">Budget Adherence</p>
-                <p className="text-xl font-bold text-foreground">{monthlyOverview.budgetAdherence}%</p>
+                <p className="text-xl font-bold text-foreground">{budgetAdherence.toFixed(1)}%</p>
               </div>
             </div>
           </CardContent>
@@ -133,8 +199,8 @@ export const InsightsView = () => {
           <CardContent className="p-4">
             <div>
               <p className="text-sm text-muted">Net Income</p>
-              <p className="text-xl font-bold text-green-600">
-                +₦{(monthlyOverview.totalIncome - monthlyOverview.totalExpenses).toLocaleString()}
+              <p className={`text-xl font-bold ${netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {netIncome >= 0 ? '+' : ''}{formatCurrency(netIncome, currency)}
               </p>
             </div>
           </CardContent>
@@ -159,36 +225,46 @@ export const InsightsView = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {insights.map((insight) => {
-              const Icon = insight.icon;
-              
-              return (
-                <div key={insight.id} className="p-4 border border-border rounded-lg">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${getImpactColor(insight.impact)}`}>
-                        <Icon className="w-5 h-5" />
+          {insights.length === 0 ? (
+            <div className="text-center py-8">
+              <Lightbulb className="w-12 h-12 text-muted mx-auto mb-4" />
+              <p className="text-muted">No insights available yet</p>
+              <p className="text-sm text-muted mt-2">
+                Add more transactions and budgets to get personalized recommendations
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {insights.map((insight) => {
+                const Icon = insight.icon;
+                
+                return (
+                  <div key={insight.id} className="p-4 border border-border rounded-lg">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${getImpactColor(insight.impact)}`}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-foreground">{insight.title}</h3>
+                          <p className="text-sm text-muted mt-1">{insight.description}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">{insight.title}</h3>
-                        <p className="text-sm text-muted mt-1">{insight.description}</p>
-                      </div>
+                      <Badge variant="outline" className={getPriorityColor(insight.priority)}>
+                        {insight.priority}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className={getPriorityColor(insight.priority)}>
-                      {insight.priority}
-                    </Badge>
+                    
+                    <div className="bg-muted/50 p-3 rounded-lg">
+                      <p className="text-sm text-foreground">
+                        <strong>Recommended Action:</strong> {insight.action}
+                      </p>
+                    </div>
                   </div>
-                  
-                  <div className="bg-muted/50 p-3 rounded-lg">
-                    <p className="text-sm text-foreground">
-                      <strong>Recommended Action:</strong> {insight.action}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -198,35 +274,45 @@ export const InsightsView = () => {
           <CardTitle>Spending Trends Analysis</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {spendingTrends.map((trend) => (
-              <div key={trend.category} className="flex justify-between items-center p-3 border border-border rounded-lg">
-                <div>
-                  <p className="font-medium text-foreground">{trend.category}</p>
-                  <p className="text-sm text-muted">
-                    ₦{trend.thisMonth.toLocaleString()} this month
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className={`flex items-center gap-1 ${
-                    trend.change > 0 ? 'text-red-600' : 'text-green-600'
-                  }`}>
-                    {trend.change > 0 ? (
-                      <TrendingUp className="w-4 h-4" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4" />
-                    )}
-                    <span className="text-sm font-medium">
-                      {Math.abs(trend.change)}%
-                    </span>
+          {spendingTrends.length === 0 ? (
+            <div className="text-center py-8">
+              <BarChart3 className="w-12 h-12 text-muted mx-auto mb-4" />
+              <p className="text-muted">No spending data available</p>
+              <p className="text-sm text-muted mt-2">
+                Add transactions to see spending trends and analysis
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {spendingTrends.map((trend) => (
+                <div key={trend.category} className="flex justify-between items-center p-3 border border-border rounded-lg">
+                  <div>
+                    <p className="font-medium text-foreground">{trend.category}</p>
+                    <p className="text-sm text-muted">
+                      {formatCurrency(trend.thisMonth, currency)} this month
+                    </p>
                   </div>
-                  <p className="text-xs text-muted">
-                    vs last month
-                  </p>
+                  <div className="text-right">
+                    <div className={`flex items-center gap-1 ${
+                      trend.change > 0 ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      {trend.change > 0 ? (
+                        <TrendingUp className="w-4 h-4" />
+                      ) : (
+                        <TrendingDown className="w-4 h-4" />
+                      )}
+                      <span className="text-sm font-medium">
+                        {Math.abs(trend.change).toFixed(1)}%
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted">
+                      vs last month
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

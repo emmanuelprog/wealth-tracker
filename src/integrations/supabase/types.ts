@@ -214,6 +214,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          priority: string
+          read: boolean
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          priority?: string
+          read?: boolean
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string
+          read?: boolean
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -315,6 +351,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_settings: {
+        Row: {
+          budget_alerts: boolean
+          created_at: string
+          email_notifications: boolean
+          goal_reminders: boolean
+          id: string
+          low_balance_threshold: number | null
+          monthly_report: boolean
+          push_notifications: boolean
+          transaction_notifications: boolean
+          updated_at: string
+          user_id: string
+          weekly_summary: boolean
+        }
+        Insert: {
+          budget_alerts?: boolean
+          created_at?: string
+          email_notifications?: boolean
+          goal_reminders?: boolean
+          id?: string
+          low_balance_threshold?: number | null
+          monthly_report?: boolean
+          push_notifications?: boolean
+          transaction_notifications?: boolean
+          updated_at?: string
+          user_id: string
+          weekly_summary?: boolean
+        }
+        Update: {
+          budget_alerts?: boolean
+          created_at?: string
+          email_notifications?: boolean
+          goal_reminders?: boolean
+          id?: string
+          low_balance_threshold?: number | null
+          monthly_report?: boolean
+          push_notifications?: boolean
+          transaction_notifications?: boolean
+          updated_at?: string
+          user_id?: string
+          weekly_summary?: boolean
+        }
+        Relationships: []
       }
     }
     Views: {

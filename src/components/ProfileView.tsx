@@ -18,31 +18,98 @@ import {
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
+import { useProfile } from "@/hooks/useProfile";
+import { useAccounts } from "@/hooks/useAccounts";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useGoals } from "@/hooks/useGoals";
+import { useAuth } from "@/hooks/useAuth";
+import { currencies, formatCurrency } from "@/lib/currency";
 
 export const ProfileView = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "John Doe",
-    email: "john.doe@email.com",
-    phone: "+234 801 234 5678",
-    location: "Lagos, Nigeria",
-    memberSince: "January 2024",
-    accountType: "Premium",
-    currency: "NGN"
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    phone: "",
+    location: "",
+    preferred_currency: "NGN"
   });
 
-  const currencies = [
-    { value: "NGN", label: "Nigerian Naira (₦)", symbol: "₦" },
-    { value: "USD", label: "US Dollar ($)", symbol: "$" },
-    { value: "GBP", label: "British Pound (£)", symbol: "£" }
-  ];
+  const { user } = useAuth();
+  const { profile, loading: profileLoading, updateProfile } = useProfile();
+  const { accounts, getTotalBalance } = useAccounts();
+  const { getTotalSpending } = useTransactions();
+  const { goals } = useGoals();
+
+  // Set form data when profile loads
+  useState(() => {
+    if (profile) {
+      setFormData({
+        first_name: profile.first_name || "",
+        last_name: profile.last_name || "",
+        phone: profile.phone || "",
+        location: profile.location || "",
+        preferred_currency: profile.preferred_currency || "NGN"
+      });
+    }
+  });
+
+  const handleSave = async () => {
+    try {
+      await updateProfile(formData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+
+  const handleCancel = () => {
+    if (profile) {
+      setFormData({
+        first_name: profile.first_name || "",
+        last_name: profile.last_name || "",
+        phone: profile.phone || "",
+        location: profile.location || "",
+        preferred_currency: profile.preferred_currency || "NGN"
+      });
+    }
+    setIsEditing(false);
+  };
+
+  const completedGoals = goals.filter(goal => goal.is_completed).length;
 
   const stats = [
-    { label: "Total Transactions", value: "147", icon: CreditCard },
-    { label: "Active Accounts", value: "4", icon: Shield },
-    { label: "Goals Achieved", value: "3", icon: Calendar },
-    { label: "Notifications", value: "12", icon: Bell },
+    { 
+      label: "Total Transactions", 
+      value: "Loading...", // Would require transaction count query
+      icon: CreditCard 
+    },
+    { 
+      label: "Active Accounts", 
+      value: accounts.length.toString(), 
+      icon: Shield 
+    },
+    { 
+      label: "Goals Achieved", 
+      value: completedGoals.toString(), 
+      icon: Calendar 
+    },
+    { 
+      label: "Notifications", 
+      value: "Loading...", // Would require notification count
+      icon: Bell 
+    },
   ];
+
+  if (profileLoading) {
+    return <div className="p-6">Loading profile...</div>;
+  }
+
+  if (!profile) {
+    return <div className="p-6">Profile not found.</div>;
+  }
+
+  const displayName = profile.display_name || `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
 
   return (
     <div className="p-6 space-y-6 bg-background min-h-screen">
@@ -52,14 +119,21 @@ export const ProfileView = () => {
           <h1 className="text-2xl font-bold text-foreground">Profile</h1>
           <p className="text-muted">Manage your account information</p>
         </div>
-        <Button 
-          variant={isEditing ? "default" : "outline"} 
-          size="sm"
-          onClick={() => setIsEditing(!isEditing)}
-        >
-          <Edit className="w-4 h-4 mr-2" />
-          {isEditing ? "Save Changes" : "Edit Profile"}
-        </Button>
+        {isEditing ? (
+          <div className="flex gap-2">
+            <Button variant="default" size="sm" onClick={handleSave}>
+              Save Changes
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleCancel}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+            <Edit className="w-4 h-4 mr-2" />
+            Edit Profile
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -75,27 +149,37 @@ export const ProfileView = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-4 mb-6">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src="/placeholder.svg" />
+                  <AvatarImage src={profile.avatar_url} />
                   <AvatarFallback className="text-lg bg-primary text-primary-foreground">
-                    {profile.name.split(' ').map(n => n[0]).join('')}
+                    {displayName.split(' ').map(n => n[0]).join('').toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="text-xl font-semibold text-foreground">{profile.name}</h3>
+                  <h3 className="text-xl font-semibold text-foreground">{displayName || "User"}</h3>
                   <Badge variant="secondary" className="mt-1">
-                    {profile.accountType} Member
+                    Premium Member
                   </Badge>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="firstName">First Name</Label>
                   <Input
-                    id="name"
-                    value={profile.name}
+                    id="firstName"
+                    value={formData.first_name}
                     disabled={!isEditing}
-                    onChange={(e) => setProfile({...profile, name: e.target.value})}
+                    onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                    className={!isEditing ? "bg-muted" : ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    value={formData.last_name}
+                    disabled={!isEditing}
+                    onChange={(e) => setFormData({...formData, last_name: e.target.value})}
                     className={!isEditing ? "bg-muted" : ""}
                   />
                 </div>
@@ -104,19 +188,18 @@ export const ProfileView = () => {
                   <Input
                     id="email"
                     type="email"
-                    value={profile.email}
-                    disabled={!isEditing}
-                    onChange={(e) => setProfile({...profile, email: e.target.value})}
-                    className={!isEditing ? "bg-muted" : ""}
+                    value={user?.email || ""}
+                    disabled={true}
+                    className="bg-muted"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input
                     id="phone"
-                    value={profile.phone}
+                    value={formData.phone}
                     disabled={!isEditing}
-                    onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
                     className={!isEditing ? "bg-muted" : ""}
                   />
                 </div>
@@ -124,17 +207,17 @@ export const ProfileView = () => {
                   <Label htmlFor="location">Location</Label>
                   <Input
                     id="location"
-                    value={profile.location}
+                    value={formData.location}
                     disabled={!isEditing}
-                    onChange={(e) => setProfile({...profile, location: e.target.value})}
+                    onChange={(e) => setFormData({...formData, location: e.target.value})}
                     className={!isEditing ? "bg-muted" : ""}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="currency">Preferred Currency</Label>
                   <Select
-                    value={profile.currency}
-                    onValueChange={(value) => setProfile({...profile, currency: value})}
+                    value={formData.preferred_currency}
+                    onValueChange={(value) => setFormData({...formData, preferred_currency: value})}
                     disabled={!isEditing}
                   >
                     <SelectTrigger className={!isEditing ? "bg-muted" : ""}>
@@ -181,7 +264,7 @@ export const ProfileView = () => {
                   <Calendar className="w-4 h-4 text-muted" />
                   <span className="text-foreground">Member Since</span>
                 </div>
-                <span className="text-muted">{profile.memberSince}</span>
+                <span className="text-muted">{new Date(profile.created_at).toLocaleDateString()}</span>
               </div>
             </CardContent>
           </Card>
