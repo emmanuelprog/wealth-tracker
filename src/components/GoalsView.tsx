@@ -310,6 +310,7 @@ export const GoalsView = () => {
                   target_date: goal.targetDate,
                   goal_type: goal.category === 'Debt Payoff' ? 'debt_reduction' : 'savings',
                   priority: 'medium',
+                  is_completed: false,
                 });
                 setShowAddGoal(false);
               } catch (error) {
