@@ -7,9 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { transactionFormSchema, sanitizeString, type TransactionFormData } from "@/lib/validation";
+import { CalendarIcon, Plus, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { z } from "zod";
 
 interface AddTransactionFormProps {
   onSubmit: (transaction: any) => void;
@@ -20,6 +23,7 @@ interface AddTransactionFormProps {
 
 export const AddTransactionForm = ({ onSubmit, onCancel, accounts, categories }: AddTransactionFormProps) => {
   const [date, setDate] = useState<Date>(new Date());
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     merchant: "",
     amount: "",
@@ -32,19 +36,42 @@ export const AddTransactionForm = ({ onSubmit, onCancel, accounts, categories }:
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
-    const transaction = {
-      merchant: formData.merchant,
-      amount: formData.amount,
-      category_id: formData.category_id,
-      account_id: formData.account_id,
-      transaction_type: formData.transaction_type,
-      transaction_date: date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      notes: formData.notes,
-      description: formData.description,
-    };
-    
-    onSubmit(transaction);
+    try {
+      // Prepare and validate form data
+      const transactionData: TransactionFormData = {
+        merchant: sanitizeString(formData.merchant),
+        amount: parseFloat(formData.amount) || 0,
+        category_id: formData.category_id || undefined,
+        account_id: formData.account_id,
+        transaction_type: formData.transaction_type as "income" | "expense",
+        transaction_date: date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        notes: formData.notes ? sanitizeString(formData.notes) : undefined,
+        description: formData.description ? sanitizeString(formData.description) : undefined,
+      };
+
+      // Validate with Zod schema
+      const validatedData = transactionFormSchema.parse(transactionData);
+      
+      onSubmit({
+        merchant: validatedData.merchant,
+        amount: validatedData.amount.toString(),
+        category_id: validatedData.category_id,
+        account_id: validatedData.account_id,
+        transaction_type: validatedData.transaction_type,
+        transaction_date: validatedData.transaction_date,
+        notes: validatedData.notes,
+        description: validatedData.description,
+      });
+    } catch (err: any) {
+      if (err instanceof z.ZodError) {
+        const firstError = err.errors[0];
+        setError(firstError?.message || "Invalid input data");
+      } else {
+        setError(err.message || "Failed to create transaction");
+      }
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -61,6 +88,12 @@ export const AddTransactionForm = ({ onSubmit, onCancel, accounts, categories }:
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {error && (
+          <Alert className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="merchant">Merchant/Description</Label>
@@ -81,6 +114,8 @@ export const AddTransactionForm = ({ onSubmit, onCancel, accounts, categories }:
               name="amount"
               type="number"
               step="0.01"
+              min="0.01"
+              max="1000000"
               placeholder="0.00"
               value={formData.amount}
               onChange={handleInputChange}

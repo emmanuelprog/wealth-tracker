@@ -7,7 +7,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
+import { accountFormSchema, sanitizeString, type AccountFormData } from "@/lib/validation";
 import { AlertCircle } from "lucide-react";
+import { z } from "zod";
 
 interface AddAccountFormProps {
   onClose: () => void;
@@ -28,27 +30,39 @@ export const AddAccountForm = ({ onClose }: AddAccountFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!accountName || !accountType || !initialBalance) {
-      setError("Please fill in all required fields");
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
+
+      // Prepare and validate form data
+      const formData: AccountFormData = {
+        name: sanitizeString(accountName),
+        account_type: accountType as any,
+        institution_name: institutionName ? sanitizeString(institutionName) : undefined,
+        balance: parseFloat(initialBalance) || 0,
+        currency: userCurrency,
+      };
+
+      // Validate with Zod schema
+      const validatedData = accountFormSchema.parse(formData);
       
       await createAccount({
-        name: accountName,
-        account_type: accountType as any,
-        institution_name: institutionName || undefined,
-        balance: parseFloat(initialBalance),
-        currency: userCurrency,
+        name: validatedData.name,
+        account_type: validatedData.account_type,
+        institution_name: validatedData.institution_name,
+        balance: validatedData.balance,
+        currency: validatedData.currency,
         is_active: true,
       });
       
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to create account");
+      if (err instanceof z.ZodError) {
+        const firstError = err.errors[0];
+        setError(firstError?.message || "Invalid input data");
+      } else {
+        setError(err.message || "Failed to create account");
+      }
     } finally {
       setLoading(false);
     }
@@ -86,9 +100,10 @@ export const AddAccountForm = ({ onClose }: AddAccountFormProps) => {
             <SelectContent>
               <SelectItem value="checking">Checking</SelectItem>
               <SelectItem value="savings">Savings</SelectItem>
-              <SelectItem value="credit">Credit Card</SelectItem>
+              <SelectItem value="credit_card">Credit Card</SelectItem>
               <SelectItem value="investment">Investment</SelectItem>
               <SelectItem value="loan">Loan</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -111,6 +126,8 @@ export const AddAccountForm = ({ onClose }: AddAccountFormProps) => {
             id="initialBalance"
             type="number"
             step="0.01"
+            min="-1000000"
+            max="1000000000"
             value={initialBalance}
             onChange={(e) => setInitialBalance(e.target.value)}
             placeholder="0.00"
