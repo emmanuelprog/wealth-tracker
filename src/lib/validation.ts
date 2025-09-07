@@ -1,9 +1,53 @@
 import { z } from "zod";
+import { validatePasswordStrength, validateEmail, sanitizeInput } from "./security";
 
-// Input sanitization helper
+// Enhanced input sanitization helper
 export const sanitizeString = (input: string): string => {
-  return input.trim().replace(/[<>]/g, ""); // Remove basic HTML tags
+  return sanitizeInput(input);
 };
+
+// Enhanced authentication validation schemas
+export const authSignUpSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .refine((email) => validateEmail(email).isValid, {
+      message: "Please enter a valid email address"
+    }),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters long")
+    .refine((password) => validatePasswordStrength(password).isValid, {
+      message: "Password must contain uppercase, lowercase, numbers, and special characters"
+    }),
+  confirmPassword: z.string(),
+  firstName: z
+    .string()
+    .min(1, "First name is required")
+    .max(50, "First name must be less than 50 characters")
+    .refine((val) => sanitizeString(val).length > 0, "First name cannot be empty"),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .max(50, "Last name must be less than 50 characters")
+    .refine((val) => sanitizeString(val).length > 0, "Last name cannot be empty"),
+  preferredCurrency: z.string().length(3, "Currency must be a valid 3-letter code")
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"]
+});
+
+export const authSignInSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .refine((email) => validateEmail(email).isValid, {
+      message: "Please enter a valid email address"
+    }),
+  password: z
+    .string()
+    .min(1, "Password is required")
+});
 
 // Common validation schemas
 export const accountFormSchema = z.object({
@@ -116,6 +160,8 @@ export const userSettingsSchema = z.object({
     .max(1000000, "Threshold cannot exceed 1,000,000")
 });
 
+export type AuthSignUpData = z.infer<typeof authSignUpSchema>;
+export type AuthSignInData = z.infer<typeof authSignInSchema>;
 export type AccountFormData = z.infer<typeof accountFormSchema>;
 export type TransactionFormData = z.infer<typeof transactionFormSchema>;
 export type GoalFormData = z.infer<typeof goalFormSchema>;
