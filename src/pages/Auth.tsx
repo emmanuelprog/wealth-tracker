@@ -31,6 +31,8 @@ const Auth = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [preferredCurrency, setPreferredCurrency] = useState("NGN");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSent, setResetSent] = useState(false);
   
   // Security states
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: [], isValid: false });
@@ -196,6 +198,64 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setRateLimitError(null);
+
+    const clientId = resetEmail || "anonymous";
+    
+    // Check rate limiting
+    const canProceed = await authRateLimiter.checkLimit(clientId, "reset");
+    if (!canProceed) {
+      const blockedUntil = authRateLimiter.getBlockedUntil(clientId, "reset");
+      setRateLimitError(
+        `Too many reset attempts. Try again ${blockedUntil ? `after ${blockedUntil.toLocaleTimeString()}` : 'later'}.`
+      );
+      setLoading(false);
+      return;
+    }
+
+    // Validate email
+    if (!validateEmail(resetEmail)) {
+      setError("Please enter a valid email address");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const redirectUrl = `${window.location.origin}/reset-password`;
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        sanitizeInput(resetEmail),
+        { redirectTo: redirectUrl }
+      );
+
+      if (error) {
+        await auditLogger.logAuthEvent(AuditEventType.FAILED_PASSWORD_RESET, resetEmail, false);
+        setError(error.message);
+        toast({
+          title: "Password Reset Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        await auditLogger.logAuthEvent(AuditEventType.PASSWORD_RESET_REQUEST, resetEmail, true);
+        setResetSent(true);
+        toast({
+          title: "Password Reset Email Sent",
+          description: "Check your email for password reset instructions.",
+        });
+      }
+    } catch (err) {
+      await auditLogger.logAuthEvent(AuditEventType.FAILED_PASSWORD_RESET, resetEmail, false);
+      setError("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -208,9 +268,10 @@ const Auth = () => {
         </div>
 
         <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
             <TabsTrigger value="signup">Get Started</TabsTrigger>
+            <TabsTrigger value="reset">Reset Password</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin">
@@ -265,6 +326,71 @@ const Auth = () => {
                   </Button>
                 </CardFooter>
               </form>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reset">
+            <Card>
+              <CardHeader>
+                <CardTitle>Reset Password</CardTitle>
+                <CardDescription>
+                  Enter your email address and we'll send you a link to reset your password
+                </CardDescription>
+              </CardHeader>
+              {resetSent ? (
+                <CardContent className="space-y-4">
+                  <Alert>
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription>
+                      Password reset email sent! Check your inbox for reset instructions.
+                    </AlertDescription>
+                  </Alert>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => {
+                      setResetSent(false);
+                      setResetEmail("");
+                    }}
+                  >
+                    Send Another Email
+                  </Button>
+                </CardContent>
+              ) : (
+                <form onSubmit={handleForgotPassword}>
+                  <CardContent className="space-y-4">
+                    {error && (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                      </Alert>
+                    )}
+                    {rateLimitError && (
+                      <Alert variant="destructive">
+                        <Shield className="h-4 w-4" />
+                        <AlertDescription>{rateLimitError}</AlertDescription>
+                      </Alert>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-email">Email Address</Label>
+                      <Input
+                        id="reset-email"
+                        type="email"
+                        placeholder="Enter your email address"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Send Reset Email
+                    </Button>
+                  </CardFooter>
+                </form>
+              )}
             </Card>
           </TabsContent>
 
