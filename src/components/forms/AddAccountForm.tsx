@@ -69,7 +69,7 @@ export const AddAccountForm = ({ onClose }: AddAccountFormProps) => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-h-[90vh] overflow-y-auto">
       <h2 className="text-xl font-semibold mb-4">Add New Account</h2>
       
       {error && (
@@ -97,7 +97,7 @@ export const AddAccountForm = ({ onClose }: AddAccountFormProps) => {
             <SelectTrigger>
               <SelectValue placeholder="Select account type" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-card border border-border z-50">
               <SelectItem value="checking">Checking</SelectItem>
               <SelectItem value="savings">Savings</SelectItem>
               <SelectItem value="credit_card">Credit Card</SelectItem>

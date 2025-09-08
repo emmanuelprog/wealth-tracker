@@ -80,14 +80,14 @@ export const AddTransactionForm = ({ onSubmit, onCancel, accounts, categories }:
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
+    <Card className="w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center">
           <Plus className="w-5 h-5 mr-2" />
           Add Transaction
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-y-auto">
         {error && (
           <Alert className="mb-4">
             <AlertCircle className="h-4 w-4" />
@@ -132,7 +132,7 @@ export const AddTransactionForm = ({ onSubmit, onCancel, accounts, categories }:
               <SelectTrigger>
                 <SelectValue placeholder="Select an account" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-card border border-border z-50">
                 {accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.name} ({account.account_type})
@@ -151,7 +151,7 @@ export const AddTransactionForm = ({ onSubmit, onCancel, accounts, categories }:
               <SelectTrigger>
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-card border border-border z-50">
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.icon} {category.name}
@@ -170,7 +170,7 @@ export const AddTransactionForm = ({ onSubmit, onCancel, accounts, categories }:
               <SelectTrigger>
                 <SelectValue placeholder="Select transaction type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-card border border-border z-50">
                 <SelectItem value="expense">Expense</SelectItem>
                 <SelectItem value="income">Income</SelectItem>
               </SelectContent>

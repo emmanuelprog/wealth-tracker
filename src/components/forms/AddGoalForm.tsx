@@ -88,14 +88,14 @@ export const AddGoalForm = ({ onSubmit, onCancel }: AddGoalFormProps) => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
+    <Card className="w-full max-w-md mx-auto max-h-[90vh] overflow-hidden">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center">
           <Target className="w-5 h-5 mr-2" />
           Add Financial Goal
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-y-auto">
         {error && (
           <Alert className="mb-4">
             <AlertCircle className="h-4 w-4" />
@@ -120,7 +120,7 @@ export const AddGoalForm = ({ onSubmit, onCancel }: AddGoalFormProps) => {
               <SelectTrigger>
                 <SelectValue placeholder="Select goal category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-card border border-border z-50">
                 {goalCategories.map(category => (
                   <SelectItem key={category} value={category}>{category}</SelectItem>
                 ))}

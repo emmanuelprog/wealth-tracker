@@ -93,9 +93,9 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
     };
 
     return (
-      <div className="bg-card border-r border-border h-screen w-64 p-4 flex flex-col">
+      <div className="bg-card border-r border-border h-screen w-64 p-4 flex flex-col overflow-hidden">
         {/* Logo/Brand */}
-        <div className="mb-8">
+        <div className="mb-8 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <TrendingUp className="w-4 h-4 text-primary-foreground" />
@@ -105,7 +105,7 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
         </div>
 
         {/* Navigation Items */}
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
           {navItems.map((item) => {
             const isActive = activeView === item.id;
             return (
@@ -115,7 +115,7 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
         </div>
 
         {/* User Profile */}
-        <div className="border-t border-border pt-4 mt-4 space-y-2">
+        <div className="border-t border-border pt-4 mt-4 space-y-2 flex-shrink-0">
           <ProfileButton />
           <SignOutButton />
         </div>
