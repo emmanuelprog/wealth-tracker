@@ -87,7 +87,7 @@ export const AddTransactionForm = ({ onSubmit, onCancel, accounts, categories }:
           Add Transaction
         </CardTitle>
       </CardHeader>
-      <CardContent className="overflow-y-auto">
+      <CardContent className="overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {error && (
           <Alert className="mb-4">
             <AlertCircle className="h-4 w-4" />

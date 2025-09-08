@@ -105,7 +105,7 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
         </div>
 
         {/* Navigation Items */}
-        <div className="flex-1 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+        <div className="flex-1 space-y-2 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
           {navItems.map((item) => {
             const isActive = activeView === item.id;
             return (
