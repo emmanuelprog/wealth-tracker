@@ -32,7 +32,6 @@ export const Navigation = ({ activeView, onViewChange }: NavigationProps) => {
     { id: 'goals', label: 'Goals', icon: Target },
     { id: 'insights', label: 'Insights', icon: TrendingUp },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'profile', label: 'Profile', icon: User },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
