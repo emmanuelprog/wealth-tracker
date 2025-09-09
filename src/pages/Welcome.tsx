@@ -18,10 +18,10 @@ const Welcome = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="text-lg px-8 py-6">
-              <Link to="/auth">Get Started Free</Link>
+              <Link to="/auth?tab=signup">Get Started Free</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
-              <Link to="/auth">Sign In</Link>
+              <Link to="/auth?tab=signin">Sign In</Link>
             </Button>
           </div>
         </div>
@@ -98,7 +98,7 @@ const Welcome = () => {
                 Join thousands of users who have taken control of their financial future with WealthTracker
               </p>
               <Button asChild size="lg" className="text-lg px-8 py-6">
-                <Link to="/auth">Start Your Journey</Link>
+                <Link to="/auth?tab=signup">Start Your Journey</Link>
               </Button>
             </CardContent>
           </Card>

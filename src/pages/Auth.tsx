@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,10 @@ const Auth = () => {
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  
+  // Get the tab from URL params, default to "signin"
+  const defaultTab = searchParams.get("tab") === "signup" ? "signup" : "signin";
 
   // Form states
   const [signInEmail, setSignInEmail] = useState("");
@@ -267,7 +271,7 @@ const Auth = () => {
           <p className="text-muted-foreground">Manage your finances with confidence</p>
         </div>
 
-        <Tabs defaultValue="signin" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
             <TabsTrigger value="signup">Get Started</TabsTrigger>
