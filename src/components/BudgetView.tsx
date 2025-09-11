@@ -21,6 +21,7 @@ import { useBudgets } from "@/hooks/useBudgets";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency } from "@/lib/currency";
+import { AddBudgetForm } from "@/components/forms/AddBudgetForm";
 
 export const BudgetView = () => {
   const [showAddCategory, setShowAddCategory] = useState(false);
@@ -238,19 +239,11 @@ export const BudgetView = () => {
 
       {/* Add Category Dialog */}
       <Dialog open={showAddCategory} onOpenChange={setShowAddCategory}>
-        <DialogContent className="max-w-md">
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Add Budget Category</h2>
-            <p className="text-muted">Budget category form will be implemented here.</p>
-            <div className="flex gap-2 mt-6">
-              <Button variant="outline" onClick={() => setShowAddCategory(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button onClick={() => setShowAddCategory(false)} className="flex-1">
-                Add Category
-              </Button>
-            </div>
-          </div>
+        <DialogContent className="max-w-2xl">
+          <AddBudgetForm 
+            onSuccess={() => setShowAddCategory(false)} 
+            onCancel={() => setShowAddCategory(false)} 
+          />
         </DialogContent>
       </Dialog>
     </div>
