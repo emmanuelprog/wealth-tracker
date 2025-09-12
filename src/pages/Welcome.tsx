@@ -2,10 +2,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, DollarSign, Target, PieChart, Shield, Smartphone } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Welcome = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10">
+      {/* Header with Theme Toggle */}
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
+      
       {/* Hero Section */}
       <div className="container mx-auto px-4 pt-16 pb-24">
         <div className="text-center mb-16">
