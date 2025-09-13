@@ -49,11 +49,14 @@ export const FirstAccountSetup = ({ preferredCurrency, onComplete }: FirstAccoun
       });
 
       toast({
-        title: "Account Created!",
-        description: `Your ${accountName} account has been set up successfully.`,
+        title: "Account Created Successfully! 🎉",
+        description: `Your ${accountName} account has been set up. You're ready to start tracking your finances!`,
       });
 
-      onComplete();
+      // Small delay to ensure the account is properly created before completing onboarding
+      setTimeout(() => {
+        onComplete();
+      }, 500);
     } catch (err: any) {
       setError(err.message || "Failed to create account");
       toast({

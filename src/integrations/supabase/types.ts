@@ -402,7 +402,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      ensure_user_has_categories: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
+      ensure_user_setup_complete: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       account_type:

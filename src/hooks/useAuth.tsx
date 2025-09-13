@@ -23,6 +23,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Ensure user setup is complete when they sign in
+        if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+          setTimeout(async () => {
+            try {
+              await supabase.rpc('ensure_user_setup_complete', { 
+                user_uuid: session.user.id 
+              });
+            } catch (error) {
+              console.error('Error ensuring user setup:', error);
+            }
+          }, 100);
+        }
       }
     );
 

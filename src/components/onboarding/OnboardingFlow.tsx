@@ -16,13 +16,29 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (user) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
-        
-        setUserProfile(data);
+        try {
+          // Ensure user has complete setup before proceeding
+          await supabase.rpc('ensure_user_setup_complete', { 
+            user_uuid: user.id 
+          });
+          
+          const { data } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("user_id", user.id)
+            .single();
+          
+          setUserProfile(data);
+        } catch (error) {
+          console.error('Error setting up user profile:', error);
+          // Fallback to basic profile data
+          setUserProfile({
+            user_id: user.id,
+            first_name: 'User',
+            display_name: 'User',
+            preferred_currency: 'NGN'
+          });
+        }
       }
     };
 
