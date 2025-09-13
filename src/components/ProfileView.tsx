@@ -14,45 +14,47 @@ import {
   Shield,
   CreditCard,
   Bell,
-  Globe
+  Wallet
 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useGoals } from "@/hooks/useGoals";
 import { useAuth } from "@/hooks/useAuth";
-import { currencies, formatCurrency } from "@/lib/currency";
+import { useNotifications } from "@/hooks/useNotifications";
 
-export const ProfileView = () => {
+interface ProfileViewProps {
+  onViewChange: (view: string) => void;
+}
+
+export const ProfileView = ({ onViewChange }: ProfileViewProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
     phone: "",
-    location: "",
-    preferred_currency: "NGN"
+    location: ""
   });
 
   const { user } = useAuth();
   const { profile, loading: profileLoading, updateProfile } = useProfile();
-  const { accounts, getTotalBalance } = useAccounts();
-  const { getTotalSpending } = useTransactions();
+  const { accounts } = useAccounts();
+  const { transactions } = useTransactions();
   const { goals } = useGoals();
+  const { getUnreadCount } = useNotifications();
 
   // Set form data when profile loads
-  useState(() => {
+  useEffect(() => {
     if (profile) {
       setFormData({
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
         phone: profile.phone || "",
-        location: profile.location || "",
-        preferred_currency: profile.preferred_currency || "NGN"
+        location: profile.location || ""
       });
     }
-  });
+  }, [profile]);
 
   const handleSave = async () => {
     try {
@@ -69,25 +71,25 @@ export const ProfileView = () => {
         first_name: profile.first_name || "",
         last_name: profile.last_name || "",
         phone: profile.phone || "",
-        location: profile.location || "",
-        preferred_currency: profile.preferred_currency || "NGN"
+        location: profile.location || ""
       });
     }
     setIsEditing(false);
   };
 
   const completedGoals = goals.filter(goal => goal.is_completed).length;
+  const unreadNotifications = getUnreadCount();
 
   const stats = [
     { 
       label: "Total Transactions", 
-      value: "Loading...", // Would require transaction count query
+      value: transactions.length.toString(), 
       icon: CreditCard 
     },
     { 
       label: "Active Accounts", 
       value: accounts.length.toString(), 
-      icon: Shield 
+      icon: Wallet 
     },
     { 
       label: "Goals Achieved", 
@@ -95,8 +97,8 @@ export const ProfileView = () => {
       icon: Calendar 
     },
     { 
-      label: "Notifications", 
-      value: "Loading...", // Would require notification count
+      label: "Unread Notifications", 
+      value: unreadNotifications.toString(), 
       icon: Bell 
     },
   ];
@@ -213,25 +215,6 @@ export const ProfileView = () => {
                     className={!isEditing ? "bg-muted" : ""}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Preferred Currency</Label>
-                  <Select
-                    value={formData.preferred_currency}
-                    onValueChange={(value) => setFormData({...formData, preferred_currency: value})}
-                    disabled={!isEditing}
-                  >
-                    <SelectTrigger className={!isEditing ? "bg-muted" : ""}>
-                      <SelectValue placeholder="Select currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currencies.map((currency) => (
-                        <SelectItem key={currency.value} value={currency.value}>
-                          {currency.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -257,7 +240,9 @@ export const ProfileView = () => {
                   <Phone className="w-4 h-4 text-muted" />
                   <span className="text-foreground">Phone Verification</span>
                 </div>
-                <Badge variant="default">Verified</Badge>
+                <Badge variant={profile.phone ? "default" : "secondary"}>
+                  {profile.phone ? "Verified" : "Not Set"}
+                </Badge>
               </div>
               <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center space-x-3">
@@ -297,21 +282,37 @@ export const ProfileView = () => {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => onViewChange('settings')}
+              >
                 <Shield className="w-4 h-4 mr-2" />
                 Security Settings
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => onViewChange('notifications')}
+              >
                 <Bell className="w-4 h-4 mr-2" />
-                Notification Preferences
+                Notification Center
               </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Globe className="w-4 h-4 mr-2" />
-                Currency Settings
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => onViewChange('settings')}
+              >
+                <User className="w-4 h-4 mr-2" />
+                App Settings
               </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <CreditCard className="w-4 h-4 mr-2" />
-                Connected Accounts
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => onViewChange('accounts')}
+              >
+                <Wallet className="w-4 h-4 mr-2" />
+                Manage Accounts
               </Button>
             </CardContent>
           </Card>

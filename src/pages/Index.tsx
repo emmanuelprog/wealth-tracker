@@ -122,7 +122,7 @@ const Index = () => {
       case 'notifications':
         return <NotificationsView />;
       case 'profile':
-        return <ProfileView />;
+        return <ProfileView onViewChange={setActiveView} />;
       case 'settings':
         return <SettingsView />;
       default:
